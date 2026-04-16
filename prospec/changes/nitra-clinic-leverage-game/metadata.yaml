@@ -1,0 +1,5 @@
+name: nitra-clinic-leverage-game
+status: tasks
+created: 2026-04-14
+description: Quasar 多人 PWA 遊戲，模擬診所透過 Nitra 槓桿擴張，5 分鐘結算總資產排名
+feature: clinic-leverage-game

@@ -29,7 +29,14 @@
     "eslint-plugin-vue": "^9.21.0",
     "typescript": "^5.3.3",
     "vitest": "^1.2.0",
-    "vue-tsc": "^1.8.27"
+    "vue-tsc": "^1.8.27",
+    "workbox-build": "7.0.0",
+    "workbox-cacheable-response": "7.0.0",
+    "workbox-core": "7.0.0",
+    "workbox-expiration": "7.0.0",
+    "workbox-precaching": "7.0.0",
+    "workbox-routing": "7.0.0",
+    "workbox-strategies": "7.0.0"
   },
   "engines": {
     "node": ">=18.0.0",

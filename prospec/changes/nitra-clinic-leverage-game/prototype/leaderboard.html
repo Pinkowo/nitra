@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Leaderboard</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+html, body { height: 100%; overflow-y: auto; overflow-x: hidden; }
+.timesup {
+  opacity: 0;
+  animation: timesup-in 0.55s 0.2s cubic-bezier(0.17,0.67,0.35,1.4) forwards;
+}
+@keyframes timesup-in {
+  from { transform: scale(0.4) rotate(-4deg); opacity: 0; }
+  to   { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+.lb-subtitle {
+  font-size: 0.85rem; color: #888;
+  text-align: center; margin-bottom: 20px;
+  opacity: 0; animation: fade-in 0.4s 0.9s ease forwards;
+}
+@keyframes fade-in { to { opacity: 1; } }
+.lb-entry { opacity: 0; }
+.lb-entry:nth-child(1) { animation: slide-in 0.4s 1.1s  ease both; }
+.lb-entry:nth-child(2) { animation: slide-in 0.4s 1.24s ease both; }
+.lb-entry:nth-child(3) { animation: slide-in 0.4s 1.38s ease both; }
+.lb-entry:nth-child(4) { animation: slide-in 0.4s 1.52s ease both; }
+.lb-entry:nth-child(5) { animation: slide-in 0.4s 1.66s ease both; }
+@keyframes slide-in {
+  from { transform: translateX(60px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+</style>
+</head>
+<body>
+<div class="lb-page">
+  <div class="timesup">⏰ TIME'S UP！</div>
+  <div class="lb-subtitle">最終排名 · 總資產計算</div>
+  <div class="lb-list" id="list"></div>
+</div>
+
+<script>
+const players = [
+  { name:'小花',    rank:1, cash:18200, assets:24000, attack:250, customers:42 },
+  { name:'阿明',    rank:2, cash:12500, assets:19800, attack:208, customers:35 },
+  { name:'大偉',    rank:3, cash:9800,  assets:16200, attack:172, customers:28 },
+  { name:'Jessica', rank:4, cash:7200,  assets:11500, attack:125, customers:20 },
+  { name:'志遠',    rank:5, cash:4100,  assets:8300,  attack:93,  customers:15 },
+]
+const medals   = ['🥇','🥈','🥉']
+const rankCls  = ['r1','r2','r3','','']
+
+players.forEach((p, i) => {
+  const total = p.cash + p.assets
+  const div = document.createElement('div')
+  div.className = `lb-entry ${rankCls[i] || ''}`
+  div.innerHTML = `
+    <div class="lb-rank">${medals[i] || '<span style="font-size:1rem;color:#999">#' + p.rank + '</span>'}</div>
+    <div class="lb-name">${p.name}</div>
+    <div class="lb-chips">
+      <span class="stat-chip">⚔️ ${p.attack}</span>
+      <span class="stat-chip">👤 ${p.customers} 人</span>
+    </div>
+    <div class="lb-total">💰 ${total.toLocaleString()}</div>
+  `
+  document.getElementById('list').appendChild(div)
+})
+</script>
+</body>
+</html>

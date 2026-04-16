@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Nitra Prototype</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+body { overflow: auto; background: #0a1628; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; gap: 24px; padding: 40px 16px; }
+.screen-card { width: 360px; border: 1px solid rgba(255,215,0,0.3); border-radius: 12px; overflow: hidden; position: relative; background: #0d1b2a; }
+.screen-label { font-size: 0.7rem; color: rgba(255,215,0,0.7); padding: 6px 12px; background: rgba(255,215,0,0.06); border-bottom: 1px solid rgba(255,215,0,0.15); letter-spacing: 0.08em; text-transform: uppercase; }
+h1 { color: #ffd700; font-size: 1.5rem; text-align: center; }
+.nav-links { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+.nav-links a { color: #ffd700; text-decoration: none; padding: 8px 18px; border: 1px solid rgba(255,215,0,0.4); border-radius: 8px; font-size: 0.9rem; }
+.nav-links a:hover { background: rgba(255,215,0,0.1); }
+</style>
+</head>
+<body>
+<h1>🏥 Nitra Prototype</h1>
+<div class="nav-links">
+  <a href="game.html">🎮 Game Screen</a>
+  <a href="shop.html">🛒 Equipment Shop</a>
+  <a href="leaderboard.html">🏆 Leaderboard</a>
+</div>
+
+<!-- Mini previews -->
+<div class="screen-card">
+  <div class="screen-label">Game Screen — 街道 + 客人 + 診所</div>
+  <iframe src="game.html" width="360" height="480" style="border:none;display:block;pointer-events:none;"></iframe>
+</div>
+<div class="screen-card">
+  <div class="screen-label">Equipment Shop — Bubble Carousel</div>
+  <iframe src="shop.html" width="360" height="480" style="border:none;display:block;pointer-events:none;"></iframe>
+</div>
+<div class="screen-card">
+  <div class="screen-label">Leaderboard — Final Results</div>
+  <iframe src="leaderboard.html" width="360" height="480" style="border:none;display:block;pointer-events:none;"></iframe>
+</div>
+</body>
+</html>

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Shop Close-up</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+html,body{height:100%;overflow:hidden}
+/* Show game scene behind (simulated) */
+.scene-behind{
+  position:fixed;inset:0;
+  background:linear-gradient(to bottom,#87CEEB 0%,#D9F0FF 45%,#C9B99A 70%,#EDE2CC 100%);
+  overflow:hidden;
+}
+/* Simulated customers walking behind the sheet */
+.bg-customer{
+  position:absolute;font-size:2rem;
+  animation-timing-function:linear;
+  animation-iteration-count:infinite;
+}
+.sheet-backdrop{background:rgba(0,0,0,.15);pointer-events:none}
+.sheet-backdrop.visible{pointer-events:none}/* keep non-blocking for demo */
+</style>
+</head>
+<body>
+<!-- Simulated scene behind sheet -->
+<div class="scene-behind">
+  <div class="bldg" style="position:absolute;left:5%;bottom:38%;width:60px;height:90px;background:#F4C97A;border-radius:4px 4px 0 0"></div>
+  <div class="bldg" style="position:absolute;left:25%;bottom:38%;width:80px;height:110px;background:#F7D080;border-radius:4px 4px 0 0"></div>
+  <div class="bldg" style="position:absolute;left:55%;bottom:38%;width:70px;height:95px;background:#E8A070;border-radius:4px 4px 0 0"></div>
+  <div class="bldg" style="position:absolute;left:78%;bottom:38%;width:55px;height:75px;background:#DEB887;border-radius:4px 4px 0 0"></div>
+  <!-- Customers still walking -->
+  <div class="bg-customer" style="animation:walk-right 5s linear infinite;bottom:37%;left:-60px">🧑‍⚕️</div>
+  <div class="bg-customer" style="animation:walk-left 6s linear 2s infinite;bottom:36%;right:-60px;transform:scaleX(-1)">👩‍💼</div>
+  <!-- Clinic -->
+  <div style="position:absolute;bottom:37%;left:50%;transform:translateX(-50%);font-size:3rem;opacity:.55">🏥</div>
+</div>
+
+<div class="sheet-backdrop visible"></div>
+
+<!-- Equipment Sheet — always open for demo -->
+<div class="equipment-sheet open" id="sheet">
+  <div class="sheet-handle"></div>
+
+  <div class="carousel-wrap" id="carousel"
+       ontouchstart="dragStart(event)" ontouchmove="dragMove(event)" ontouchend="dragEnd(event)"
+       onmousedown="dragStart(event)" onmousemove="dragMove(event)" onmouseup="dragEnd(event)"
+       onmouseleave="dragEnd(event)">
+  </div>
+
+  <div class="shop-detail">
+    <div class="shop-item-name" id="d-name"></div>
+    <div class="shop-item-meta" id="d-meta"></div>
+    <div class="shop-owned" id="d-owned" style="display:none">✓ 已擁有</div>
+  </div>
+
+  <div class="shop-nitra-row">
+    <div class="shop-nitra-info">
+      Nitra 已用：<span class="shop-nitra-used" id="nitra-used">$4,000</span>
+      &nbsp;·&nbsp; 現金：<span id="cash-disp">$5,000</span>
+    </div>
+    <button class="btn-repay" id="btn-repay" onclick="doRepay()">💵 還款</button>
+  </div>
+
+  <div class="shop-actions">
+    <button class="btn-cancel" onclick="alert('關閉器材室')">取消</button>
+    <button class="btn-buy-nitra" id="btn-buy" onclick="doBuy()">💳 Nitra 購買</button>
+  </div>
+</div>
+
+<script>
+const ITEMS = [
+  { name:'診療椅',        emoji:'🪑', price:1200,  asset:800,   owned:true  },
+  { name:'自動血壓計',    emoji:'🩺', price:2000,  asset:1400,  owned:false },
+  { name:'兒童糖果機',    emoji:'🍬', price:800,   asset:500,   owned:false },
+  { name:'電子聽診器',    emoji:'🔬', price:1500,  asset:1000,  owned:false },
+  { name:'診斷顯示器',    emoji:'🖥️', price:3500,  asset:2500,  owned:false },
+  { name:'消毒機器人',    emoji:'🤖', price:5000,  asset:3800,  owned:false },
+  { name:'手術燈',        emoji:'💡', price:2800,  asset:2000,  owned:false },
+  { name:'電子病歷平板',  emoji:'📱', price:1800,  asset:1200,  owned:false },
+  { name:'耳溫槍',        emoji:'🌡️', price:600,   asset:400,   owned:false },
+  { name:'按摩椅',        emoji:'💆', price:4000,  asset:3000,  owned:false },
+  { name:'AI MRI 掃描儀', emoji:'🧲', price:15000, asset:12000, owned:false, premium:true },
+  { name:'達文西手術臂',  emoji:'🦾', price:20000, asset:18000, owned:false, premium:true },
+]
+
+let selIdx = 1, cash = 5000, creditUsed = 4000, creditLimit = 10000
+const SLOT_X = {'-2':-200,'-1':-108,'0':0,'1':108,'2':200}
+const SLOT_S = {'-2':.42,'-1':.65,'0':1,'1':.65,'2':.42}
+const SLOT_O = {'-2':.3, '-1':.72,'0':1,'1':.72,'2':.3}
+const BASE = 100
+
+function renderCarousel(dx=0) {
+  const wrap = document.getElementById('carousel')
+  wrap.innerHTML = ''
+  for (let off = -2; off <= 2; off++) {
+    const i = selIdx + off
+    const div = document.createElement('div')
+    div.className = 'bubble'
+    const s = SLOT_S[String(off)], size = BASE * s
+    const x = SLOT_X[String(off)] + dx
+    const isPrem = i >= 0 && i < ITEMS.length && ITEMS[i]?.premium
+    const bg = off === 0 ? (isPrem ? '#DDB8FF' : '#FFE566') : (isPrem ? '#F0E8FF' : '#E8F4FD')
+    const bd = off === 0 ? (isPrem ? '#C77DFF' : '#F4C430') : (isPrem ? '#C77DFF' : '#AED6F1')
+    const sh = off === 0 ? `0 0 0 4px ${bd},0 4px 22px rgba(244,196,48,.45)` : '0 2px 6px rgba(0,0,0,.10)'
+    div.style.cssText = `width:${size}px;height:${size}px;background:${bg};border:${off===0?3:2}px solid ${bd};box-shadow:${sh};opacity:${SLOT_O[String(off)]};transform:translate(calc(-50% + ${x}px),-50%);left:50%;top:50%;z-index:${off===0?2:1};`
+    if (i >= 0 && i < ITEMS.length) {
+      div.innerHTML = `<div class="b-emoji">${ITEMS[i].emoji}</div>${Math.abs(off)<=1?`<div class="b-name">${ITEMS[i].name}</div>`:''}`
+      if (off !== 0) { const t = i; div.addEventListener('click', () => { selIdx=t; renderCarousel(); renderDetail() }) }
+    } else div.style.visibility = 'hidden'
+    wrap.appendChild(div)
+  }
+}
+
+function renderDetail() {
+  const it = ITEMS[selIdx]
+  document.getElementById('d-name').textContent = (it.premium?'⭐ ':'') + it.name
+  document.getElementById('d-meta').textContent = `💳 $${it.price.toLocaleString()}  ·  📦 +${it.asset.toLocaleString()} 資產值`
+  document.getElementById('d-owned').style.display = it.owned ? '' : 'none'
+  document.getElementById('d-meta').style.display = it.owned ? 'none' : ''
+  document.getElementById('btn-buy').disabled = it.owned || (creditLimit - creditUsed) < it.price
+  document.getElementById('btn-repay').disabled = creditUsed === 0 || cash < creditUsed
+  document.getElementById('nitra-used').textContent = '$' + creditUsed.toLocaleString()
+  document.getElementById('cash-disp').textContent = '$' + cash.toLocaleString()
+}
+
+let sx=0, active=false, lastDx=0
+function dragStart(e){sx=(e.touches?e.touches[0]:e).clientX;active=true;lastDx=0}
+function dragMove(e){if(!active)return;lastDx=(e.touches?e.touches[0]:e).clientX-sx;renderCarousel(lastDx*.6)}
+function dragEnd(){if(!active)return;active=false;if(Math.abs(lastDx)>40)selIdx=Math.max(0,Math.min(ITEMS.length-1,selIdx+(lastDx<0?1:-1)));lastDx=0;renderCarousel();renderDetail()}
+
+function doBuy() {
+  const it = ITEMS[selIdx]
+  if (it.owned || creditLimit-creditUsed < it.price) return
+  creditUsed += it.price; it.owned = true
+  renderCarousel(); renderDetail()
+}
+function doRepay() {
+  if (creditUsed===0||cash<creditUsed) return
+  alert(`還款 $${creditUsed.toLocaleString()}\n鎖定 ${Math.max(1,Math.min(5,Math.ceil(creditUsed/(creditLimit/5))))} 秒`)
+  cash -= creditUsed; creditUsed = 0
+  renderCarousel(); renderDetail()
+}
+
+renderCarousel(); renderDetail()
+</script>
+</body>
+</html>

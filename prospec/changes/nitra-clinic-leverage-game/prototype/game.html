@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Nitra Clinic</title>
+<style>
+/* ── Reset ─────────────────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;
+  font-family:'Helvetica Neue',system-ui,sans-serif;
+  -webkit-tap-highlight-color:transparent;color:#2C1F0F}
+
+/* ── Tokens ────────────────────────────────────────────────────── */
+:root{
+  --sky-a:#7EB8D4;--sky-b:#A8D8EA;--sky-c:#D6EDFF;
+  --street:#C4965A;--sidewalk:#D9B87A;
+  --panel:#FFF8EC;--panel-bd:#E0C890;
+  --shop-dark:rgba(18,8,0,.65);
+  --cash:#A07000;--nitra:#C83A18;
+  --txt:#2C1F0F;--txt-mid:#8A6845;--txt-lt:#B09878;
+  --hp-hi:#52B86A;--hp-md:#E89818;--hp-lo:#D83830;
+  --btn-r:#C83A18;--btn-r-dk:#A02A10;
+  --btn-g:#358038;--btn-g-dk:#24582A;
+  --hud-bg:rgba(255,252,240,.97);--hud-bd:rgba(180,148,98,.3);
+  --bub-idle:#EBF5FB;--bub-idle-bd:#A8C8E0;
+  --bub-sel:#FFF09A;--bub-sel-bd:#D8B800;
+  --bub-prem:#F2EAFF;--bub-prem-bd:#B080E0;--bub-prem-sel:#E4D0FF;
+  --r-card:12px;--r-btn:8px;
+  --t-sheet:transform 300ms cubic-bezier(0.2,0,0,1);
+  --t-bub:transform 250ms cubic-bezier(0.35,0,0.25,1),opacity 250ms ease,box-shadow 250ms ease;
+}
+
+/* ── Layout ────────────────────────────────────────────────────── */
+.hud-wrap{position:fixed;top:0;left:0;right:0;z-index:50}
+.scene{position:fixed;inset:0;display:flex;flex-direction:column;padding-top:80px}
+.sky{flex:1;min-height:0;
+  background:linear-gradient(180deg,var(--sky-a) 0%,var(--sky-b) 55%,var(--sky-c) 100%);
+  position:relative;overflow:hidden}
+.street-lane{height:148px;background:var(--street);
+  position:relative;overflow:visible;border-top:3px solid #9A7035}
+.street-lane::after{content:'';position:absolute;top:50%;left:0;right:0;height:4px;
+  background:repeating-linear-gradient(90deg,rgba(255,255,255,.38) 0 26px,transparent 26px 52px);
+  transform:translateY(-50%)}
+.sidewalk{height:16px;background:var(--sidewalk);border-top:2px solid #C09858}
+.clinic-base{background:linear-gradient(180deg,#EEDDCC,#DDD0B8);
+  padding:6px 0 0;display:flex;justify-content:center;align-items:flex-end;flex-shrink:0}
+
+/* ── HUD ───────────────────────────────────────────────────────── */
+.hud{background:var(--hud-bg);border-bottom:1.5px solid var(--hud-bd);
+  padding:7px 12px;display:flex;align-items:center;gap:8px;
+  box-shadow:0 2px 8px rgba(60,30,0,.10)}
+.hud-rank{background:#3A80B8;color:#fff;padding:4px 10px;border-radius:6px;
+  font-size:.88rem;font-weight:800;display:flex;align-items:center;gap:5px}
+.hud-name{font-size:.96rem;font-weight:700;color:var(--txt);
+  max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hud-timer{margin:0 auto;font-size:1.6rem;font-weight:900;
+  font-variant-numeric:tabular-nums;letter-spacing:.02em;
+  display:flex;align-items:center;gap:5px}
+.hud-timer.urgent{color:var(--hp-lo);animation:blink .5s ease-in-out infinite alternate}
+@keyframes blink{to{opacity:.3}}
+.hud-money{display:flex;gap:12px}
+.hud-col{display:flex;flex-direction:column;align-items:center;gap:1px}
+.hud-lbl{font-size:.68rem;color:var(--txt-mid);font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase}
+.hud-val{font-size:1.05rem;font-weight:900;display:flex;align-items:center;gap:3px}
+.hud-val.cash{color:var(--cash)}
+.hud-val.cred{color:var(--nitra)}
+
+/* Credit bar */
+.credit-bar{background:rgba(255,252,238,.97);border-bottom:1px solid var(--hud-bd);
+  padding:3px 12px 5px}
+.credit-row{display:flex;justify-content:space-between;
+  font-size:.74rem;color:var(--txt-mid);margin-bottom:2px}
+.credit-track{height:6px;border-radius:3px;background:#E8D8B8;overflow:hidden}
+.credit-fill{height:100%;border-radius:3px;background:var(--nitra);transition:width .3s ease}
+
+/* ── Clouds ────────────────────────────────────────────────────── */
+.cloud{position:absolute;background:rgba(255,255,255,.76);border-radius:50px;
+  animation:drift linear infinite}
+.cloud::before,.cloud::after{content:'';position:absolute;background:inherit;border-radius:50%}
+.ca{width:72px;height:22px;top:14%;animation-duration:22s}
+.ca::before{width:42px;height:42px;top:-19px;left:10px}
+.ca::after{width:28px;height:28px;top:-11px;right:9px}
+.cb{width:58px;height:18px;top:34%;animation-duration:31s;animation-delay:-10s;opacity:.6}
+.cb::before{width:32px;height:32px;top:-13px;left:8px}
+.cc{width:90px;height:27px;top:7%;animation-duration:27s;animation-delay:-7s;opacity:.55}
+.cc::before{width:48px;height:48px;top:-22px;left:13px}
+@keyframes drift{from{left:-160px}to{left:calc(100% + 160px)}}
+
+/* ── City buildings ────────────────────────────────────────────── */
+.city-row{position:absolute;bottom:0;left:0;right:0;height:58%;
+  display:flex;align-items:flex-end;gap:0;overflow:hidden}
+.bldg{flex-shrink:0;border-radius:3px 3px 0 0;position:relative}
+.bldg::after{content:'';position:absolute;
+  top:18%;left:18%;width:28%;height:22%;
+  background:rgba(255,255,255,.18);border-radius:2px}
+.bldg::before{content:'';position:absolute;
+  top:18%;right:18%;width:28%;height:22%;
+  background:rgba(255,255,255,.12);border-radius:2px}
+
+/* ── Sky leaderboard ───────────────────────────────────────────── */
+.sky-lb{position:absolute;top:8px;right:8px;
+  background:rgba(255,252,240,.94);border:1.5px solid rgba(200,170,100,.5);
+  border-radius:10px;padding:8px 12px;min-width:172px;
+  font-size:.82rem;line-height:1.8;
+  box-shadow:0 2px 10px rgba(60,30,0,.13);transition:opacity .3s;z-index:3}
+.sky-lb-title{font-weight:900;font-size:.86rem;color:var(--cash);
+  margin-bottom:4px;letter-spacing:.04em;display:flex;align-items:center;gap:4px}
+.sky-lb-row{display:flex;gap:6px;align-items:center}
+.sky-lb-row.me{background:rgba(255,200,0,.18);border-radius:4px;padding:0 4px}
+.sky-lb-rank{font-weight:800;min-width:20px;display:flex;align-items:center;justify-content:center}
+.sky-lb-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.sky-lb-val{font-weight:900;font-size:.8rem;color:var(--cash)}
+
+/* ── Sky events ────────────────────────────────────────────────── */
+.sky-event{position:absolute;bottom:12px;left:0;right:0;
+  display:flex;align-items:center;justify-content:center;z-index:4;pointer-events:none}
+.sky-banner{background:#FFD028;color:#5A3200;
+  font-size:1.05rem;font-weight:900;padding:8px 22px;border-radius:4px;
+  box-shadow:0 3px 14px rgba(0,0,0,.22);white-space:nowrap;
+  transform:translateX(-110%)}
+.sky-banner.sweep{animation:banner-sweep 3.6s ease forwards}
+@keyframes banner-sweep{
+  0%{transform:translateX(-110%)}
+  18%{transform:translateX(0)}
+  72%{transform:translateX(0)}
+  100%{transform:translateX(110%)}}
+.sky-countdown{font-size:5rem;font-weight:900;color:#C82000;display:none;
+  text-shadow:3px 3px 0 rgba(0,0,0,.10),0 0 28px rgba(200,32,0,.35);
+  animation:count-pop .25s ease}
+@keyframes count-pop{from{transform:scale(1.5);opacity:.5}to{transform:scale(1);opacity:1}}
+.sky-lock{background:rgba(255,250,235,.94);border:1.5px solid #E8C090;
+  border-radius:8px;padding:7px 20px;font-size:1rem;font-weight:800;
+  color:#A82800;display:none;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+
+/* ── Customer sprites ──────────────────────────────────────────── */
+.customer{position:absolute;top:50%;transform:translateY(-50%);
+  display:flex;flex-direction:column;align-items:center;
+  cursor:pointer;user-select:none}
+.hp-bar{width:46px;height:6px;border-radius:3px;
+  background:rgba(0,0,0,.18);margin-bottom:4px;overflow:hidden}
+.hp-fill{height:100%;border-radius:3px;background:var(--hp-hi);
+  transition:width 130ms ease,background 200ms ease}
+.hp-fill.mid{background:var(--hp-md)}
+.hp-fill.low{background:var(--hp-lo)}
+.char-svg{display:block;animation:char-bob .42s ease-in-out infinite alternate;
+  image-rendering:pixelated}
+@keyframes char-bob{from{transform:translateY(0)}to{transform:translateY(-4px)}}
+.customer.whale .char-svg{animation:char-bob .65s ease-in-out infinite alternate}
+
+@keyframes walk-right{from{left:-100px}to{left:calc(100% + 100px)}}
+@keyframes walk-left{from{right:-100px;left:auto}to{right:calc(100% + 100px);left:auto}}
+
+/* ── Floating numbers ──────────────────────────────────────────── */
+.float-num{position:fixed;font-weight:900;pointer-events:none;z-index:999;
+  animation:float-up .78s ease-out forwards}
+.float-num.dmg{font-size:1.6rem;color:#D02818;
+  text-shadow:0 1px 0 rgba(255,255,255,.9),0 0 8px rgba(208,40,24,.4)}
+.float-num.cash-pop{font-size:1.25rem;color:#906000;text-shadow:0 1px 0 rgba(255,255,255,.9)}
+@keyframes float-up{0%{transform:translateY(0);opacity:1}100%{transform:translateY(-54px);opacity:0}}
+
+/* ── Clinic building ───────────────────────────────────────────── */
+.clinic{width:196px;height:106px;background:#FEFDF5;
+  border-radius:7px 7px 0 0;border:2px solid #E0D0B0;border-bottom:none;
+  box-shadow:0 -3px 12px rgba(60,30,0,.10);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  cursor:pointer;position:relative;
+  transition:transform 140ms ease,box-shadow 140ms ease}
+.clinic:active{transform:scale(.97)}
+.clinic.open{box-shadow:0 -4px 20px rgba(78,205,196,.5),0 0 0 2px #48C4B8}
+/* red cross roof via clip-path */
+.clinic::before{content:'';position:absolute;top:-24px;left:50%;transform:translateX(-50%);
+  width:34px;height:30px;background:#C83030;
+  clip-path:polygon(35% 0%,65% 0%,65% 35%,100% 35%,100% 65%,65% 65%,65% 100%,35% 100%,35% 65%,0% 65%,0% 35%,35% 35%)}
+.clinic-sign{font-size:.72rem;font-weight:900;color:#226060;
+  letter-spacing:.06em;text-transform:uppercase;
+  background:#E0F4F0;border:1.5px solid #A0DCD4;border-radius:3px;
+  padding:2px 10px;margin-bottom:2px}
+.clinic-assets{font-size:.88rem;font-weight:600;color:var(--txt-mid);
+  display:flex;align-items:center;gap:4px}
+.clinic-assets-val{font-weight:900;color:var(--cash);font-size:1rem}
+
+/* ── Equipment sheet ───────────────────────────────────────────── */
+.backdrop{position:fixed;inset:0;background:rgba(0,0,0,0);
+  pointer-events:none;z-index:9;transition:background .2s ease}
+.backdrop.on{background:rgba(0,0,0,.18);pointer-events:auto}
+.eq-sheet{position:fixed;bottom:0;left:0;right:0;height:64vh;
+  background:var(--shop-dark);
+  border-top:1px solid rgba(255,255,255,.09);
+  box-shadow:0 -6px 28px rgba(0,0,0,.38);
+  transform:translateY(100%);transition:var(--t-sheet);
+  z-index:10;display:flex;flex-direction:column;overflow:hidden}
+.eq-sheet.open{transform:translateY(0)}
+.sheet-handle{width:36px;height:4px;border-radius:2px;
+  background:rgba(255,255,255,.22);margin:10px auto 4px;flex-shrink:0}
+
+/* ── Bubble carousel ───────────────────────────────────────────── */
+.carousel{flex:1;min-height:0;position:relative;
+  display:flex;align-items:center;justify-content:center;
+  overflow:visible;touch-action:pan-y;cursor:grab}
+.carousel:active{cursor:grabbing}
+.bubble{position:absolute;border-radius:50%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  transition:var(--t-bub);user-select:none}
+.b-name{font-size:.75rem;font-weight:800;text-align:center;margin-top:4px;
+  max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  color:rgba(255,255,255,.9)}
+
+/* ── Shop bottom ───────────────────────────────────────────────── */
+.shop-detail{padding:5px 14px 2px;text-align:center;flex-shrink:0}
+.item-name{font-size:1.2rem;font-weight:900;color:#fff}
+.item-meta{font-size:.95rem;color:rgba(255,255,255,.62);margin-top:3px}
+.item-owned{display:inline-flex;align-items:center;gap:4px;color:#68EDAA;
+  font-weight:800;font-size:.95rem;background:rgba(104,237,170,.12);
+  padding:3px 12px;border-radius:20px;margin-top:4px}
+.nitra-row{display:flex;align-items:center;gap:8px;margin:4px 12px 0;
+  background:rgba(200,58,24,.10);border:1px solid rgba(200,58,24,.28);
+  border-radius:8px;padding:8px 12px;flex-shrink:0}
+.nitra-info{flex:1;font-size:.88rem;color:rgba(255,255,255,.6)}
+.nitra-used-val{font-weight:800;color:#FF8060}
+.shop-actions{display:flex;gap:8px;padding:6px 12px 14px;flex-shrink:0}
+.btn-cancel{flex:0 0 auto;padding:12px 16px;border-radius:var(--r-btn);
+  background:rgba(255,255,255,.09);color:rgba(255,255,255,.78);
+  border:1px solid rgba(255,255,255,.16);cursor:pointer;
+  font-size:1rem;font-weight:700;transition:background 100ms}
+.btn-cancel:hover{background:rgba(255,255,255,.17)}
+.btn-buy{flex:1;padding:12px;border-radius:var(--r-btn);
+  background:var(--btn-r);color:#fff;border:none;cursor:pointer;
+  font-size:1.05rem;font-weight:800;box-shadow:0 3px 0 var(--btn-r-dk);
+  transition:transform 100ms,box-shadow 100ms,opacity 100ms}
+.btn-buy:active:not(:disabled){transform:translateY(2px);box-shadow:0 1px 0 var(--btn-r-dk)}
+.btn-repay{padding:10px 14px;border-radius:var(--r-btn);
+  background:var(--btn-g);color:#fff;border:none;cursor:pointer;
+  font-size:.9rem;font-weight:800;box-shadow:0 3px 0 var(--btn-g-dk);white-space:nowrap;
+  transition:transform 100ms,box-shadow 100ms,opacity 100ms}
+.btn-repay:active:not(:disabled){transform:translateY(2px);box-shadow:0 1px 0 var(--btn-g-dk)}
+button:disabled{opacity:.33;cursor:not-allowed}
+
+/* ── Repay lock overlay ────────────────────────────────────────── */
+.repay-lock{position:fixed;inset:0;background:rgba(0,0,0,.52);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:14px;z-index:40;pointer-events:all}
+.lock-spinner{width:56px;height:56px;border-radius:50%;
+  border:5px solid rgba(255,200,140,.2);border-top-color:var(--nitra);
+  animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.lock-title{font-size:1.4rem;font-weight:900;color:#fff}
+.lock-sub{font-size:1rem;color:rgba(255,255,255,.62)}
+
+/* ── Flash sale overlay ────────────────────────────────────────── */
+.flash-ov{position:fixed;inset:0;background:rgba(0,0,0,.86);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:20px;z-index:30}
+.flash-title{font-size:2rem;font-weight:900;color:#FFD028;text-align:center}
+.flash-item{font-size:1.4rem;color:#fff;font-weight:800}
+.btn-grab{padding:18px 44px;border-radius:14px;background:#C82000;color:#fff;
+  border:none;cursor:pointer;font-size:1.35rem;font-weight:900;
+  box-shadow:0 0 0 4px rgba(200,32,0,.3);
+  animation:grab-pulse .42s ease-in-out infinite alternate}
+@keyframes grab-pulse{from{transform:scale(1)}to{transform:scale(1.05);box-shadow:0 0 0 10px rgba(200,32,0,.15)}}
+.flash-result{font-size:1.4rem;font-weight:900;text-align:center}
+
+/* ── Demo bar ──────────────────────────────────────────────────── */
+.demo-bar{position:fixed;bottom:0;left:0;right:0;background:rgba(0,0,0,.88);
+  padding:6px 10px;display:flex;flex-wrap:wrap;gap:6px;z-index:200}
+.demo-bar span{color:rgba(255,255,255,.5);font-size:.8rem}
+.demo-bar button{padding:5px 12px;border-radius:6px;
+  border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.10);
+  color:#fff;cursor:pointer;font-size:.8rem}
+.demo-bar button:hover{background:rgba(255,255,255,.2)}
+</style>
+</head>
+<body>
+
+<!-- ═══ SVG DEFS ═══════════════════════════════════════════════════ -->
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+<defs>
+
+<!-- ── Equipment icons (24×24 viewBox) ── -->
+
+<symbol id="ico-chair" viewBox="0 0 24 24">
+  <rect x="4" y="2" width="3" height="13" rx="1.5" fill="currentColor"/>
+  <rect x="17" y="2" width="3" height="13" rx="1.5" fill="currentColor"/>
+  <rect x="3" y="13" width="18" height="4" rx="2" fill="currentColor"/>
+  <rect x="4" y="8" width="16" height="2" rx="1" fill="currentColor" opacity=".55"/>
+  <rect x="4" y="19" width="4" height="3" rx="1" fill="currentColor" opacity=".6"/>
+  <rect x="16" y="19" width="4" height="3" rx="1" fill="currentColor" opacity=".6"/>
+</symbol>
+
+<symbol id="ico-bp" viewBox="0 0 24 24">
+  <rect x="10" y="9" width="12" height="10" rx="2" fill="currentColor"/>
+  <rect x="12" y="11" width="8" height="5" rx="1" fill="white" opacity=".6"/>
+  <rect x="13" y="12" width="3" height="1" rx=".5" fill="currentColor" opacity=".5"/>
+  <rect x="13" y="14" width="5" height="1" rx=".5" fill="currentColor" opacity=".5"/>
+  <path d="M9,5 Q4,5 4,11 Q4,17 9,17" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M9,8 L11,9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+</symbol>
+
+<symbol id="ico-candy" viewBox="0 0 24 24">
+  <rect x="7" y="2" width="10" height="15" rx="5" fill="currentColor" opacity=".22"/>
+  <rect x="7" y="2" width="10" height="2.5" rx="1.5" fill="currentColor"/>
+  <rect x="7" y="14.5" width="10" height="2.5" rx="1.5" fill="currentColor"/>
+  <rect x="6" y="17" width="12" height="4" rx="2" fill="currentColor"/>
+  <circle cx="10" cy="7" r="1.8" fill="currentColor" opacity=".85"/>
+  <circle cx="14" cy="10" r="1.8" fill="currentColor" opacity=".85"/>
+  <circle cx="10" cy="13" r="1.4" fill="currentColor" opacity=".85"/>
+</symbol>
+
+<symbol id="ico-steth" viewBox="0 0 24 24">
+  <circle cx="7" cy="4" r="2.5" fill="currentColor"/>
+  <circle cx="17" cy="4" r="2.5" fill="currentColor"/>
+  <path d="M7,6.5 Q7,13 12,15 Q17,13 17,6.5" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/>
+  <circle cx="12" cy="20" r="4" fill="currentColor"/>
+  <circle cx="12" cy="20" r="2.4" fill="white" opacity=".55"/>
+</symbol>
+
+<symbol id="ico-monitor" viewBox="0 0 24 24">
+  <rect x="1" y="2" width="22" height="14" rx="2" fill="currentColor"/>
+  <rect x="3" y="4" width="18" height="10" rx="1" fill="white" opacity=".6"/>
+  <rect x="5" y="5.5" width="7" height="1" rx=".5" fill="currentColor" opacity=".4"/>
+  <rect x="5" y="8" width="5" height="1" rx=".5" fill="currentColor" opacity=".4"/>
+  <rect x="14" y="5" width="5" height="5" rx=".5" fill="currentColor" opacity=".28"/>
+  <rect x="11" y="16" width="2" height="4" fill="currentColor" opacity=".65"/>
+  <rect x="8" y="20" width="8" height="2" rx="1" fill="currentColor" opacity=".65"/>
+</symbol>
+
+<symbol id="ico-robot" viewBox="0 0 24 24">
+  <rect x="6" y="1" width="2" height="3" rx="1" fill="currentColor" opacity=".6"/>
+  <circle cx="7" cy="1" r="1.5" fill="currentColor" opacity=".8"/>
+  <rect x="5" y="3" width="14" height="10" rx="2" fill="currentColor"/>
+  <circle cx="9" cy="8" r="2" fill="white" opacity=".8"/>
+  <circle cx="15" cy="8" r="2" fill="white" opacity=".8"/>
+  <circle cx="9" cy="8" r=".9" fill="currentColor"/>
+  <circle cx="15" cy="8" r=".9" fill="currentColor"/>
+  <rect x="8" y="11" width="2" height="1" rx=".5" fill="white" opacity=".5"/>
+  <rect x="14" y="11" width="2" height="1" rx=".5" fill="white" opacity=".5"/>
+  <rect x="7" y="13" width="10" height="7" rx="1.5" fill="currentColor" opacity=".85"/>
+  <rect x="2" y="14" width="5" height="3" rx="1.5" fill="currentColor" opacity=".7"/>
+  <rect x="17" y="14" width="5" height="3" rx="1.5" fill="currentColor" opacity=".7"/>
+  <rect x="9" y="20" width="2" height="3" rx="1" fill="currentColor" opacity=".65"/>
+  <rect x="13" y="20" width="2" height="3" rx="1" fill="currentColor" opacity=".65"/>
+</symbol>
+
+<symbol id="ico-lamp" viewBox="0 0 24 24">
+  <rect x="11" y="0" width="2" height="5" rx="1" fill="currentColor" opacity=".65"/>
+  <rect x="5" y="4" width="10" height="2" rx="1" fill="currentColor" opacity=".65"/>
+  <path d="M5,6 L7,14 L17,14 L19,6 Z" fill="currentColor" opacity=".45"/>
+  <circle cx="12" cy="14" r="5" fill="currentColor"/>
+  <circle cx="12" cy="14" r="3" fill="white" opacity=".72"/>
+  <line x1="12" y1="19" x2="10" y2="23" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".4"/>
+  <line x1="12" y1="19" x2="14" y2="23" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".4"/>
+</symbol>
+
+<symbol id="ico-tablet" viewBox="0 0 24 24">
+  <rect x="5" y="0" width="14" height="22" rx="2.5" fill="currentColor"/>
+  <rect x="7" y="2" width="10" height="16" rx="1" fill="white" opacity=".65"/>
+  <circle cx="12" cy="21" r="1" fill="white" opacity=".55"/>
+  <circle cx="12" cy="1" r=".7" fill="white" opacity=".45"/>
+  <rect x="8.5" y="4" width="7" height="1" rx=".5" fill="currentColor" opacity=".38"/>
+  <rect x="8.5" y="6.5" width="5" height="1" rx=".5" fill="currentColor" opacity=".38"/>
+  <rect x="8.5" y="9" width="7" height="1" rx=".5" fill="currentColor" opacity=".38"/>
+  <rect x="8.5" y="11.5" width="4" height="1" rx=".5" fill="currentColor" opacity=".38"/>
+</symbol>
+
+<symbol id="ico-therm" viewBox="0 0 24 24">
+  <rect x="10" y="10" width="12" height="7" rx="3.5" fill="currentColor"/>
+  <rect x="5" y="7" width="8" height="9" rx="3" fill="currentColor" opacity=".9"/>
+  <ellipse cx="5" cy="11.5" rx="4" ry="4.5" fill="currentColor"/>
+  <rect x="12" y="12" width="7" height="2.5" rx="1.2" fill="white" opacity=".55"/>
+  <circle cx="19" cy="15" r="1.2" fill="white" opacity=".4"/>
+</symbol>
+
+<symbol id="ico-massage" viewBox="0 0 24 24">
+  <rect x="2" y="3" width="4" height="14" rx="2" fill="currentColor"/>
+  <rect x="4" y="13" width="14" height="5" rx="2.5" fill="currentColor"/>
+  <rect x="15" y="14" width="7" height="4" rx="2" fill="currentColor" opacity=".85"/>
+  <rect x="1" y="2" width="6" height="4" rx="2" fill="currentColor" opacity=".8"/>
+  <rect x="6" y="18" width="2" height="5" rx="1" fill="currentColor" opacity=".6"/>
+  <rect x="12" y="18" width="2" height="5" rx="1" fill="currentColor" opacity=".6"/>
+</symbol>
+
+<symbol id="ico-mri" viewBox="0 0 24 24">
+  <circle cx="12" cy="12" r="10.5" fill="currentColor" opacity=".18"/>
+  <circle cx="12" cy="12" r="10.5" fill="none" stroke="currentColor" stroke-width="3.5"/>
+  <circle cx="12" cy="12" r="6" fill="currentColor" opacity=".15"/>
+  <circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" stroke-width="2.5" opacity=".75"/>
+  <circle cx="12" cy="12" r="2.5" fill="currentColor" opacity=".5"/>
+  <rect x="1.5" y="11" width="21" height="2" rx="1" fill="currentColor" opacity=".55"/>
+</symbol>
+
+<symbol id="ico-arm" viewBox="0 0 24 24">
+  <rect x="8" y="19" width="8" height="4" rx="1.5" fill="currentColor"/>
+  <rect x="10" y="11" width="4" height="9" rx="2" fill="currentColor" opacity=".85"/>
+  <circle cx="12" cy="11" r="3" fill="currentColor"/>
+  <rect x="9" y="4" width="3" height="8" rx="1.5" fill="currentColor" opacity=".75"
+    transform="rotate(-25 10 11)"/>
+  <circle cx="10.5" cy="4.5" r="2.5" fill="currentColor" opacity=".9"/>
+  <line x1="13" y1="3" x2="17" y2="1" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".8"/>
+  <line x1="13" y1="3" x2="17" y2="5" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".8"/>
+</symbol>
+
+<!-- ── HUD icons (16×16 viewBox) ── -->
+
+<symbol id="ico-coin" viewBox="0 0 16 16">
+  <circle cx="8" cy="8" r="7" fill="#D4A820"/>
+  <circle cx="8" cy="8" r="5.5" fill="#B88A10"/>
+  <rect x="7" y="4" width="2" height="8" rx="1" fill="#E8C040" opacity=".9"/>
+  <rect x="4.5" y="5.5" width="7" height="1.5" rx=".75" fill="#E8C040" opacity=".7"/>
+  <rect x="4.5" y="9" width="7" height="1.5" rx=".75" fill="#E8C040" opacity=".7"/>
+</symbol>
+
+<symbol id="ico-card" viewBox="0 0 16 16">
+  <rect x="1" y="3" width="14" height="10" rx="2" fill="currentColor"/>
+  <rect x="1" y="6" width="14" height="3" fill="currentColor" opacity=".35"/>
+  <rect x="3" y="11" width="4" height="1.5" rx=".75" fill="white" opacity=".5"/>
+  <rect x="8" y="11" width="3" height="1.5" rx=".75" fill="white" opacity=".35"/>
+</symbol>
+
+<symbol id="ico-clock" viewBox="0 0 16 16">
+  <circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/>
+  <circle cx="8" cy="8" r="1" fill="currentColor"/>
+  <line x1="8" y1="8" x2="8" y2="3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  <line x1="8" y1="8" x2="11.5" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+</symbol>
+
+<symbol id="ico-trophy" viewBox="0 0 16 16">
+  <rect x="5" y="10" width="6" height="2" rx="1" fill="currentColor"/>
+  <rect x="4" y="12" width="8" height="2" rx="1" fill="currentColor"/>
+  <path d="M4,2 L12,2 L11,9 Q10,11 8,11 Q6,11 5,9 Z" fill="currentColor"/>
+  <path d="M4,3 Q1,3 1,6 Q1,8 4,8" fill="none" stroke="currentColor" stroke-width="1.5"/>
+  <path d="M12,3 Q15,3 15,6 Q15,8 12,8" fill="none" stroke="currentColor" stroke-width="1.5"/>
+</symbol>
+
+</defs>
+</svg>
+
+<!-- ═══ HUD ═════════════════════════════════════════════════════════ -->
+<div class="hud-wrap">
+  <div class="hud">
+    <div class="hud-rank">
+      <svg width="12" height="12"><use href="#ico-trophy" color="#FFE08A"/></svg>
+      <span id="hud-rank-num">#2</span>
+    </div>
+    <span class="hud-name">阿明</span>
+
+    <div class="hud-timer" id="timer">
+      <svg width="14" height="14"><use href="#ico-clock" color="#7A5C3A"/></svg>
+      <span id="timer-text">3:00</span>
+    </div>
+
+    <div class="hud-money">
+      <div class="hud-col">
+        <span class="hud-lbl">現金</span>
+        <div class="hud-val cash">
+          <svg width="12" height="12"><use href="#ico-coin"/></svg>
+          <span id="hud-cash">5,000</span>
+        </div>
+      </div>
+      <div class="hud-col">
+        <span class="hud-lbl">Nitra</span>
+        <div class="hud-val cred">
+          <svg width="12" height="12"><use href="#ico-card" color="#C83A18"/></svg>
+          <span id="hud-credit">4,000</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="credit-bar">
+    <div class="credit-row">
+      <span>Nitra 額度已使用</span>
+      <span id="credit-label">4,000 / 10,000</span>
+    </div>
+    <div class="credit-track">
+      <div class="credit-fill" id="credit-fill" style="width:40%"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SCENE ════════════════════════════════════════════════════════ -->
+<div class="scene">
+
+  <!-- Sky -->
+  <div class="sky">
+    <div class="cloud ca" style="top:12%;left:5%"></div>
+    <div class="cloud cb" style="top:32%;left:25%"></div>
+    <div class="cloud cc" style="top:7%;left:55%"></div>
+
+    <!-- City silhouette -->
+    <div class="city-row">
+      <div class="bldg" style="width:58px;height:88px;background:#F5B55A"></div>
+      <div class="bldg" style="width:44px;height:64px;background:#DCA870"></div>
+      <div class="bldg" style="width:72px;height:108px;background:#F2C455"></div>
+      <div class="bldg" style="width:36px;height:55px;background:#E89050"></div>
+      <div class="bldg" style="width:50px;height:78px;background:#F5B55A"></div>
+      <div class="bldg" style="width:42px;height:58px;background:#DCA870"></div>
+      <div class="bldg" style="width:65px;height:96px;background:#E89050"></div>
+      <div class="bldg" style="width:48px;height:72px;background:#F2C455"></div>
+      <div class="bldg" style="width:38px;height:60px;background:#F5B55A"></div>
+      <div class="bldg" style="width:60px;height:84px;background:#DCA870"></div>
+      <div class="bldg" style="width:44px;height:68px;background:#E89050"></div>
+    </div>
+
+    <!-- Sky leaderboard -->
+    <div class="sky-lb" id="sky-lb">
+      <div class="sky-lb-title">
+        <svg width="12" height="12"><use href="#ico-trophy" color="#B07000"/></svg>
+        排行榜
+      </div>
+      <div class="sky-lb-row">
+        <div class="sky-lb-rank">
+          <svg width="16" height="16" viewBox="0 0 16 16">
+            <circle cx="8" cy="8" r="7" fill="#FFD700"/>
+            <text x="8" y="12" font-size="9" font-weight="900" text-anchor="middle" fill="#7A5000">1</text>
+          </svg>
+        </div>
+        <span class="sky-lb-name">小花</span>
+        <span class="sky-lb-val">$42,200</span>
+      </div>
+      <div class="sky-lb-row me">
+        <div class="sky-lb-rank">
+          <svg width="16" height="16" viewBox="0 0 16 16">
+            <circle cx="8" cy="8" r="7" fill="#B0B8C8"/>
+            <text x="8" y="12" font-size="9" font-weight="900" text-anchor="middle" fill="#404858">2</text>
+          </svg>
+        </div>
+        <span class="sky-lb-name">阿明 ◀</span>
+        <span class="sky-lb-val">$32,300</span>
+      </div>
+      <div class="sky-lb-row">
+        <div class="sky-lb-rank">
+          <svg width="16" height="16" viewBox="0 0 16 16">
+            <circle cx="8" cy="8" r="7" fill="#C87A32"/>
+            <text x="8" y="12" font-size="9" font-weight="900" text-anchor="middle" fill="#fff">3</text>
+          </svg>
+        </div>
+        <span class="sky-lb-name">大偉</span>
+        <span class="sky-lb-val">$26,000</span>
+      </div>
+    </div>
+
+    <!-- Sky events -->
+    <div class="sky-event">
+      <div class="sky-banner" id="sky-banner">超級客人現身！最後一擊得大獎！</div>
+      <div class="sky-countdown" id="sky-countdown">3</div>
+      <div class="sky-lock" id="sky-lock">還款處理中 <span id="lock-cd">3</span>s</div>
+    </div>
+  </div>
+
+  <!-- Street -->
+  <div class="street-lane" id="street">
+
+    <!-- Customer A: female doctor, walks right -->
+    <div class="customer" id="c1"
+         style="animation:walk-right 6s linear infinite;top:44%"
+         onclick="hitCustomer('c1',35)">
+      <div class="hp-bar"><div class="hp-fill" id="hp-c1" style="width:100%"></div></div>
+      <svg class="char-svg" viewBox="0 0 16 24" width="40" height="60" xmlns="http://www.w3.org/2000/svg">
+        <!-- hair -->
+        <rect x="4" y="0" width="8" height="3" fill="#3C2415"/>
+        <!-- head -->
+        <rect x="4" y="2" width="8" height="7" rx="1" fill="#F5C08A"/>
+        <!-- eyes -->
+        <rect x="6" y="5" width="1" height="2" fill="#2C1A08"/>
+        <rect x="9" y="5" width="1" height="2" fill="#2C1A08"/>
+        <!-- scrubs top -->
+        <rect x="3" y="9" width="10" height="8" fill="#6AAABB"/>
+        <!-- arms -->
+        <rect x="1" y="10" width="3" height="5" rx="1" fill="#6AAABB"/>
+        <rect x="12" y="10" width="3" height="5" rx="1" fill="#6AAABB"/>
+        <!-- hands -->
+        <rect x="0" y="14" width="3" height="2" rx="1" fill="#F5C08A"/>
+        <rect x="13" y="14" width="3" height="2" rx="1" fill="#F5C08A"/>
+        <!-- pants -->
+        <rect x="4" y="17" width="3" height="5" fill="#4A88A8"/>
+        <rect x="9" y="17" width="3" height="5" fill="#4A88A8"/>
+        <!-- shoes -->
+        <rect x="3" y="21" width="5" height="3" rx="1" fill="#1A1A28"/>
+        <rect x="8" y="21" width="5" height="3" rx="1" fill="#1A1A28"/>
+      </svg>
+    </div>
+
+    <!-- Customer B: business suit, walks left (mirrored) -->
+    <div class="customer" id="c2"
+         style="animation:walk-left 5s linear 1.8s infinite;top:38%"
+         onclick="hitCustomer('c2',35)">
+      <div class="hp-bar"><div class="hp-fill mid" id="hp-c2" style="width:55%"></div></div>
+      <svg class="char-svg" viewBox="0 0 16 24" width="40" height="60"
+           style="transform:scaleX(-1)" xmlns="http://www.w3.org/2000/svg">
+        <!-- hair -->
+        <rect x="4" y="0" width="8" height="3" fill="#2C1C10"/>
+        <!-- head -->
+        <rect x="4" y="2" width="8" height="7" rx="1" fill="#E8B080"/>
+        <!-- eyes -->
+        <rect x="6" y="5" width="1" height="2" fill="#2C1A08"/>
+        <rect x="9" y="5" width="1" height="2" fill="#2C1A08"/>
+        <!-- suit jacket -->
+        <rect x="3" y="9" width="10" height="8" fill="#5C6070"/>
+        <!-- shirt -->
+        <rect x="7" y="9" width="2" height="5" fill="#FFFDF5"/>
+        <!-- tie -->
+        <rect x="7.5" y="10" width="1" height="4" fill="#B82828"/>
+        <!-- arms -->
+        <rect x="1" y="10" width="3" height="5" rx="1" fill="#5C6070"/>
+        <rect x="12" y="10" width="3" height="5" rx="1" fill="#5C6070"/>
+        <!-- hands + briefcase -->
+        <rect x="0" y="14" width="3" height="2" rx="1" fill="#E8B080"/>
+        <rect x="12" y="13" width="4" height="4" rx="1" fill="#8A6840"/>
+        <rect x="13" y="12" width="2" height="2" rx="1" fill="#7A5830" opacity=".8"/>
+        <!-- pants -->
+        <rect x="4" y="17" width="3" height="5" fill="#383840"/>
+        <rect x="9" y="17" width="3" height="5" fill="#383840"/>
+        <!-- shoes -->
+        <rect x="3" y="21" width="5" height="3" rx="1" fill="#18181E"/>
+        <rect x="8" y="21" width="5" height="3" rx="1" fill="#18181E"/>
+      </svg>
+    </div>
+
+    <!-- Customer C: elder, walks right -->
+    <div class="customer" id="c3"
+         style="animation:walk-right 8s linear 3.5s infinite;top:54%"
+         onclick="hitCustomer('c3',35)">
+      <div class="hp-bar"><div class="hp-fill low" id="hp-c3" style="width:18%"></div></div>
+      <svg class="char-svg" viewBox="0 0 16 24" width="40" height="60" xmlns="http://www.w3.org/2000/svg">
+        <!-- gray hair -->
+        <rect x="3" y="0" width="10" height="3" fill="#9A9A9A"/>
+        <!-- head -->
+        <rect x="4" y="2" width="8" height="7" rx="1" fill="#F0B878"/>
+        <!-- eyes -->
+        <rect x="6" y="5" width="1" height="2" fill="#2C1A08"/>
+        <rect x="9" y="5" width="1" height="2" fill="#2C1A08"/>
+        <!-- casual shirt (warm orange) -->
+        <rect x="3" y="9" width="10" height="8" fill="#D07A40"/>
+        <!-- arms -->
+        <rect x="1" y="10" width="3" height="5" rx="1" fill="#D07A40"/>
+        <rect x="12" y="10" width="3" height="5" rx="1" fill="#D07A40"/>
+        <!-- cane (right hand) -->
+        <rect x="13" y="12" width="1.5" height="11" rx=".75" fill="#8A6030"/>
+        <rect x="12.5" y="11" width="3" height="1.5" rx=".75" fill="#8A6030"/>
+        <!-- hands -->
+        <rect x="0" y="14" width="3" height="2" rx="1" fill="#F0B878"/>
+        <!-- pants (blue-gray) -->
+        <rect x="4" y="17" width="3" height="5" fill="#6878A0"/>
+        <rect x="9" y="17" width="3" height="5" fill="#6878A0"/>
+        <!-- shoes -->
+        <rect x="3" y="21" width="5" height="3" rx="1" fill="#1A1A28"/>
+        <rect x="8" y="21" width="5" height="3" rx="1" fill="#1A1A28"/>
+      </svg>
+    </div>
+
+    <!-- Whale customer (hidden by default) -->
+    <div class="customer whale" id="whale"
+         style="display:none;animation:walk-right 14s linear;top:40%;left:-100px"
+         onclick="hitWhale()">
+      <div class="hp-bar" style="width:68px;height:8px">
+        <div class="hp-fill" id="whale-hp" style="width:100%;height:100%"></div>
+      </div>
+      <svg class="char-svg" viewBox="0 0 44 30" width="88" height="60" xmlns="http://www.w3.org/2000/svg">
+        <!-- body -->
+        <ellipse cx="20" cy="18" rx="18" ry="11" fill="#3A70B8"/>
+        <!-- belly -->
+        <ellipse cx="20" cy="21" rx="12" ry="7" fill="#78A8D0"/>
+        <!-- tail fluke -->
+        <path d="M36,15 Q42,8 44,10 Q42,16 44,20 Q42,22 36,19 Z" fill="#2A5A98"/>
+        <!-- dorsal fin -->
+        <path d="M22,7 Q26,2 30,6 Q28,10 22,10 Z" fill="#2A5A98"/>
+        <!-- eye -->
+        <circle cx="12" cy="14" r="3" fill="white"/>
+        <circle cx="12" cy="14" r="1.5" fill="#1A2840"/>
+        <circle cx="11.2" cy="13.2" r=".6" fill="white"/>
+        <!-- smile -->
+        <path d="M10,19 Q14,23 18,19" fill="none" stroke="#2A5A98" stroke-width="1.5" stroke-linecap="round"/>
+        <!-- crown (VIP) -->
+        <path d="M12,5 L14,1 L16,4 L18,1 L20,5 L12,5 Z" fill="#FFD028"/>
+        <rect x="12" y="5" width="8" height="2.5" rx=".5" fill="#E8B800"/>
+        <!-- water spout -->
+        <path d="M16,7 Q14,3 15,0 M18,6 Q17,2 18,0 M20,7 Q20,3 22,1"
+          fill="none" stroke="#A8D8F0" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </div>
+  </div>
+
+  <div class="sidewalk"></div>
+
+  <!-- Clinic -->
+  <div class="clinic-base">
+    <div class="clinic" id="clinic" onclick="toggleShop()">
+      <div class="clinic-sign">NITRA CLINIC</div>
+      <svg width="52" height="42" viewBox="0 0 52 42" xmlns="http://www.w3.org/2000/svg">
+        <!-- building facade detail -->
+        <rect x="2" y="0" width="48" height="42" rx="4" fill="#F8F6EC" stroke="#E0D0B0" stroke-width="1.5"/>
+        <!-- windows -->
+        <rect x="8" y="8" width="14" height="12" rx="2" fill="#B8D8E8" stroke="#A0C0D0" stroke-width="1"/>
+        <rect x="30" y="8" width="14" height="12" rx="2" fill="#B8D8E8" stroke="#A0C0D0" stroke-width="1"/>
+        <!-- door -->
+        <rect x="18" y="24" width="16" height="18" rx="2" fill="#C8B888" stroke="#B0A070" stroke-width="1"/>
+        <rect x="18" y="24" width="16" height="2" rx="1" fill="#B0A070"/>
+        <!-- door handle -->
+        <circle cx="30" cy="34" r="1.5" fill="#888060"/>
+        <!-- window cross bars -->
+        <line x1="8" y1="14" x2="22" y2="14" stroke="#90B8C8" stroke-width=".8"/>
+        <line x1="15" y1="8" x2="15" y2="20" stroke="#90B8C8" stroke-width=".8"/>
+        <line x1="30" y1="14" x2="44" y2="14" stroke="#90B8C8" stroke-width=".8"/>
+        <line x1="37" y1="8" x2="37" y2="20" stroke="#90B8C8" stroke-width=".8"/>
+      </svg>
+      <div class="clinic-assets">
+        <svg width="12" height="12"><use href="#ico-coin"/></svg>
+        資產
+        <span class="clinic-assets-val" id="clinic-assets">$2,200</span>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /scene -->
+
+<!-- ═══ BACKDROP ════════════════════════════════════════════════════ -->
+<div class="backdrop" id="backdrop" onclick="closeShop()"></div>
+
+<!-- ═══ EQUIPMENT SHEET ══════════════════════════════════════════════ -->
+<div class="eq-sheet" id="sheet">
+  <div class="sheet-handle"></div>
+
+  <div class="carousel" id="carousel"
+       ontouchstart="dragStart(event)" ontouchmove="dragMove(event)" ontouchend="dragEnd(event)"
+       onmousedown="dragStart(event)" onmousemove="dragMove(event)"
+       onmouseup="dragEnd(event)" onmouseleave="dragEnd(event)">
+  </div>
+
+  <div class="shop-detail">
+    <div class="item-name" id="d-name">診療椅</div>
+    <div class="item-meta" id="d-meta">Nitra $1,200 · +800 資產</div>
+    <div class="item-owned" id="d-owned" style="display:none">✓ 已擁有</div>
+  </div>
+
+  <div class="nitra-row">
+    <div class="nitra-info">
+      Nitra 已用：<span class="nitra-used-val" id="nitra-used-lbl">$4,000</span>
+      &nbsp;·&nbsp; 現金：<span id="cash-lbl">$5,000</span>
+    </div>
+    <button class="btn-repay" id="btn-repay" onclick="doRepay()">還款</button>
+  </div>
+
+  <div class="shop-actions">
+    <button class="btn-cancel" onclick="closeShop()">取消</button>
+    <button class="btn-buy" id="btn-buy" onclick="doBuy()">Nitra 購買</button>
+  </div>
+</div>
+
+<!-- ═══ REPAY LOCK ═══════════════════════════════════════════════════ -->
+<div class="repay-lock" id="repay-lock" style="display:none">
+  <div class="lock-spinner"></div>
+  <div class="lock-title">還款處理中</div>
+  <div class="lock-sub" id="lock-sub">3 秒後解鎖</div>
+</div>
+
+<!-- ═══ FLASH SALE ════════════════════════════════════════════════════ -->
+<div class="flash-ov" id="flash-ov" style="display:none">
+  <div class="flash-title">限量道具！</div>
+  <div class="flash-item" id="flash-item-name">AI MRI 掃描儀</div>
+  <button class="btn-grab" id="btn-grab" onclick="grabFlash()">搶！</button>
+  <div class="flash-result" id="flash-result" style="display:none"></div>
+</div>
+
+<!-- ═══ DEMO BAR ══════════════════════════════════════════════════════ -->
+<div class="demo-bar">
+  <span>Demo:</span>
+  <button onclick="triggerWhale()">超級客人</button>
+  <button onclick="triggerFlashCountdown()">限量道具倒數</button>
+  <button onclick="triggerFlashSale()">限量道具開搶</button>
+  <button onclick="triggerRepay()">還款鎖定</button>
+</div>
+
+<script>
+// ── State ────────────────────────────────────────────────────────
+let cash = 5000, creditUsed = 4000, creditLimit = 10000, assets = 2200
+let locked = false
+const hp = { c1:100, c2:55, c3:18 }
+let whaleHp = 100, whaleActive = false
+
+// ── Items (ico = SVG symbol id suffix) ──────────────────────────
+const ITEMS = [
+  { name:'診療椅',        ico:'chair',   price:1200,  asset:800,   color:'#C4782A', owned:true  },
+  { name:'自動血壓計',    ico:'bp',      price:2000,  asset:1400,  color:'#3878A8', owned:false },
+  { name:'兒童糖果機',    ico:'candy',   price:800,   asset:500,   color:'#D04878', owned:false },
+  { name:'電子聽診器',    ico:'steth',   price:1500,  asset:1000,  color:'#508080', owned:false },
+  { name:'診斷顯示器',    ico:'monitor', price:3500,  asset:2500,  color:'#2858A0', owned:false },
+  { name:'消毒機器人',    ico:'robot',   price:5000,  asset:3800,  color:'#308858', owned:false },
+  { name:'手術燈',        ico:'lamp',    price:2800,  asset:2000,  color:'#B88020', owned:false },
+  { name:'電子病歷平板',  ico:'tablet',  price:1800,  asset:1200,  color:'#4068A8', owned:false },
+  { name:'耳溫槍',        ico:'therm',   price:600,   asset:400,   color:'#388888', owned:false },
+  { name:'按摩椅',        ico:'massage', price:4000,  asset:3000,  color:'#7848B0', owned:false },
+  { name:'AI MRI 掃描儀', ico:'mri',     price:15000, asset:12000, color:'#9040D0', owned:false, premium:true },
+  { name:'達文西手術臂',  ico:'arm',     price:20000, asset:18000, color:'#6030B0', owned:false, premium:true },
+]
+let selIdx = 1
+
+// ── Carousel constants ───────────────────────────────────────────
+const SLOT = {'-2':{s:.42,o:.28},'-1':{s:.65,o:.72},'0':{s:1,o:1},'1':{s:.65,o:.72},'2':{s:.42,o:.28}}
+const SLOT_X = {'-2':-200,'-1':-108,'0':0,'1':108,'2':200}
+const BASE = 100
+
+function renderCarousel(dragDx = 0) {
+  const el = document.getElementById('carousel')
+  el.innerHTML = ''
+  for (let off = -2; off <= 2; off++) {
+    const i = selIdx + off
+    const div = document.createElement('div')
+    div.className = 'bubble'
+    const cfg = SLOT[String(off)]
+    const size = BASE * cfg.s
+    const x = SLOT_X[String(off)] + dragDx
+
+    const isPrem = i >= 0 && i < ITEMS.length && ITEMS[i]?.premium
+    const isCenter = off === 0
+
+    const bg  = isCenter ? (isPrem ? '#E8D8FF' : '#FFF09A') : (isPrem ? '#EDE0FF' : '#EBF5FB')
+    const bd  = isCenter ? (isPrem ? '#9858D8' : '#C8A800') : (isPrem ? '#B080E0' : '#A8C8E0')
+    const glow = isCenter
+      ? (isPrem ? '0 0 0 4px #C090F0, 0 4px 24px rgba(180,80,240,.38)'
+                : '0 0 0 4px #D8B000, 0 4px 24px rgba(216,176,0,.42)')
+      : '0 2px 8px rgba(0,0,0,.12)'
+
+    div.style.cssText = `
+      width:${size}px;height:${size}px;
+      background:${bg};
+      border:${isCenter ? 3 : 2}px solid ${bd};
+      box-shadow:${glow};
+      opacity:${cfg.o};
+      transform:translate(calc(-50% + ${x}px),-50%);
+      left:50%;top:50%;
+      z-index:${isCenter ? 2 : 1};
+    `
+
+    if (i >= 0 && i < ITEMS.length) {
+      const it = ITEMS[i]
+      const iconColor = isCenter ? it.color : (it.color + 'AA')
+      const iconSize = Math.round(size * 0.48)
+      div.innerHTML = `
+        <svg width="${iconSize}" height="${iconSize}" style="display:block;flex-shrink:0">
+          <use href="#ico-${it.ico}" color="${iconColor}"/>
+        </svg>
+        ${Math.abs(off) <= 1 ? `<div class="b-name">${it.name}</div>` : ''}
+      `
+      if (off !== 0) {
+        const t = i
+        div.addEventListener('click', () => { selIdx = t; renderCarousel(); renderDetail() })
+      }
+    } else {
+      div.style.visibility = 'hidden'
+    }
+    el.appendChild(div)
+  }
+}
+
+function renderDetail() {
+  const it = ITEMS[selIdx]
+  document.getElementById('d-name').textContent = (it.premium ? '★ ' : '') + it.name
+  document.getElementById('d-meta').textContent = `Nitra $${it.price.toLocaleString()}  ·  +${it.asset.toLocaleString()} 資產`
+  document.getElementById('d-owned').style.display  = it.owned ? '' : 'none'
+  document.getElementById('d-meta').style.display   = it.owned ? 'none' : ''
+
+  const avail = creditLimit - creditUsed
+  document.getElementById('btn-buy').disabled = it.owned || avail < it.price
+  updateRepayBtn()
+}
+
+function updateRepayBtn() {
+  document.getElementById('nitra-used-lbl').textContent = '$' + creditUsed.toLocaleString()
+  document.getElementById('cash-lbl').textContent       = '$' + cash.toLocaleString()
+  document.getElementById('btn-repay').disabled = creditUsed === 0 || cash < creditUsed
+}
+
+// ── Drag ─────────────────────────────────────────────────────────
+let dragStartX = 0, dragActive = false, lastDx = 0
+
+function dragStart(e) {
+  if (locked) return
+  dragStartX = (e.touches ? e.touches[0] : e).clientX
+  dragActive = true; lastDx = 0
+}
+function dragMove(e) {
+  if (!dragActive) return
+  lastDx = (e.touches ? e.touches[0] : e).clientX - dragStartX
+  renderCarousel(lastDx * 0.6)
+}
+function dragEnd() {
+  if (!dragActive) return
+  dragActive = false
+  if (Math.abs(lastDx) > 40)
+    selIdx = Math.max(0, Math.min(ITEMS.length - 1, selIdx + (lastDx < 0 ? 1 : -1)))
+  lastDx = 0
+  renderCarousel(); renderDetail()
+}
+
+// ── Shop ─────────────────────────────────────────────────────────
+function toggleShop() {
+  if (locked) return
+  document.getElementById('sheet').classList.contains('open') ? closeShop() : openShop()
+}
+function openShop() {
+  document.getElementById('sheet').classList.add('open')
+  document.getElementById('backdrop').classList.add('on')
+  document.getElementById('clinic').classList.add('open')
+  renderCarousel(); renderDetail()
+}
+function closeShop() {
+  document.getElementById('sheet').classList.remove('open')
+  document.getElementById('backdrop').classList.remove('on')
+  document.getElementById('clinic').classList.remove('open')
+}
+
+function doBuy() {
+  if (locked) return
+  const it = ITEMS[selIdx]
+  if (creditLimit - creditUsed < it.price) return
+  creditUsed += it.price
+  assets     += it.asset
+  it.owned    = true
+  updateHUD(); renderCarousel(); renderDetail()
+}
+
+// ── Repay ────────────────────────────────────────────────────────
+function doRepay() {
+  if (locked || creditUsed === 0 || cash < creditUsed) return
+  const amount = creditUsed
+  const dur = Math.max(1, Math.min(5, Math.ceil(amount / (creditLimit / 5))))
+  closeShop()
+  startRepayLock(dur, amount)
+}
+
+function startRepayLock(dur, amount) {
+  locked = true
+  cash -= amount; creditUsed = 0
+  updateHUD()
+
+  // Sky lock indicator
+  const skyLock = document.getElementById('sky-lock')
+  const lockCd  = document.getElementById('lock-cd')
+  skyLock.style.display = 'block'
+  lockCd.textContent = dur
+
+  // Full overlay
+  const overlay = document.getElementById('repay-lock')
+  overlay.style.display = 'flex'
+  document.getElementById('lock-sub').textContent = `${dur} 秒後解鎖`
+
+  let rem = dur
+  const tick = setInterval(() => {
+    rem--
+    if (rem <= 0) {
+      clearInterval(tick)
+      locked = false
+      overlay.style.display = 'none'
+      skyLock.style.display = 'none'
+    } else {
+      lockCd.textContent = rem
+      document.getElementById('lock-sub').textContent = `${rem} 秒後解鎖`
+    }
+  }, 1000)
+}
+
+// ── Combat ───────────────────────────────────────────────────────
+function hitCustomer(id, dmg) {
+  if (locked) return
+  hp[id] = Math.max(0, hp[id] - dmg)
+  const fill = document.getElementById('hp-' + id)
+  fill.style.width = hp[id] + '%'
+  fill.className = 'hp-fill' + (hp[id] < 30 ? ' low' : hp[id] < 60 ? ' mid' : '')
+  spawnFloat('-' + dmg, 'dmg')
+  if (hp[id] <= 0) {
+    const reward = dmg * 12
+    cash += reward
+    spawnFloat('+' + reward, 'cash-pop')
+    updateHUD()
+    hp[id] = 100
+    setTimeout(() => { fill.style.width = '100%'; fill.className = 'hp-fill' }, 800)
+  }
+}
+
+function hitWhale() {
+  if (locked || !whaleActive) return
+  whaleHp = Math.max(0, whaleHp - 20)
+  document.getElementById('whale-hp').style.width = whaleHp + '%'
+  spawnFloat('-20', 'dmg')
+  if (whaleHp <= 0) {
+    whaleActive = false
+    document.getElementById('whale').style.display = 'none'
+    cash += 5000
+    spawnFloat('+5000 LAST HIT', 'cash-pop')
+    updateHUD()
+  }
+}
+
+function spawnFloat(text, cls) {
+  const el = document.createElement('div')
+  el.className = 'float-num ' + cls
+  el.textContent = text
+  el.style.cssText = `left:${40 + Math.random()*120}px;top:${200 + Math.random()*60}px`
+  document.body.appendChild(el)
+  setTimeout(() => el.remove(), 800)
+}
+
+// ── HUD update ───────────────────────────────────────────────────
+function updateHUD() {
+  document.getElementById('hud-cash').textContent    = cash.toLocaleString()
+  document.getElementById('hud-credit').textContent  = creditUsed.toLocaleString()
+  document.getElementById('credit-label').textContent = `${creditUsed.toLocaleString()} / ${creditLimit.toLocaleString()}`
+  document.getElementById('credit-fill').style.width  = (creditUsed / creditLimit * 100) + '%'
+  document.getElementById('clinic-assets').textContent = '$' + assets.toLocaleString()
+}
+
+// ── Demo triggers ────────────────────────────────────────────────
+function triggerWhale() {
+  const whale = document.getElementById('whale')
+  whaleHp = 100; whaleActive = true
+  whale.style.display = ''
+  document.getElementById('whale-hp').style.width = '100%'
+  whale.style.animation = 'walk-right 14s linear forwards'
+  const banner = document.getElementById('sky-banner')
+  banner.classList.remove('sweep')
+  void banner.offsetWidth
+  banner.classList.add('sweep')
+  const lb = document.getElementById('sky-lb')
+  lb.style.opacity = '.3'
+  setTimeout(() => lb.style.opacity = '1', 4000)
+}
+
+function triggerFlashCountdown() {
+  const cd = document.getElementById('sky-countdown')
+  const lb = document.getElementById('sky-lb')
+  lb.style.opacity = '.3'
+  cd.style.display = 'block'
+  let n = 3
+  cd.textContent = n
+  cd.style.animation = 'none'; void cd.offsetWidth; cd.style.animation = 'count-pop .25s ease'
+  const t = setInterval(() => {
+    n--
+    if (n <= 0) { clearInterval(t); cd.style.display = 'none'; lb.style.opacity = '1' }
+    else {
+      cd.textContent = n
+      cd.style.animation = 'none'; void cd.offsetWidth; cd.style.animation = 'count-pop .25s ease'
+    }
+  }, 1000)
+}
+
+function triggerFlashSale() {
+  const flashItem = ITEMS.find(i => i.premium && !i.owned) || ITEMS[10]
+  document.getElementById('flash-item-name').textContent = flashItem.name
+  document.getElementById('btn-grab').style.display = ''
+  document.getElementById('flash-result').style.display = 'none'
+  document.getElementById('flash-ov').style.display = 'flex'
+}
+
+function grabFlash() {
+  const flashItem = ITEMS.find(i => i.premium && !i.owned) || ITEMS[10]
+  if (creditLimit - creditUsed < flashItem.price) {
+    const res = document.getElementById('flash-result')
+    res.style.cssText = 'display:block;color:#F44;font-size:1rem'
+    res.textContent = '額度不足，無資格搶購'
+    document.getElementById('btn-grab').style.display = 'none'
+    setTimeout(() => document.getElementById('flash-ov').style.display = 'none', 2000)
+    return
+  }
+  flashItem.owned = true
+  assets += flashItem.asset
+  updateHUD()
+  document.getElementById('btn-grab').style.display = 'none'
+  const res = document.getElementById('flash-result')
+  res.style.cssText = 'display:block;color:#6EE;font-size:1.5rem;font-weight:900'
+  res.textContent = '搶到了！\n' + flashItem.name
+  setTimeout(() => document.getElementById('flash-ov').style.display = 'none', 2200)
+}
+
+function triggerRepay() { doRepay() }
+
+// ── Timer (3 minutes) ────────────────────────────────────────────
+let secs = 180
+setInterval(() => {
+  secs = Math.max(0, secs - 1)
+  const m = Math.floor(secs / 60)
+  const s = String(secs % 60).padStart(2, '0')
+  document.getElementById('timer-text').textContent = `${m}:${s}`
+  const timerEl = document.getElementById('timer')
+  timerEl.className = 'hud-timer' + (secs <= 30 ? ' urgent' : '')
+}, 1000)
+
+// ── Init ─────────────────────────────────────────────────────────
+renderCarousel(); renderDetail(); updateHUD()
+</script>
+</body>
+</html>
