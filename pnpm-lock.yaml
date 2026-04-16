@@ -23,6 +23,9 @@ importers:
       quasar:
         specifier: ^2.14.0
         version: 2.19.3
+      register-service-worker:
+        specifier: ^1.7.2
+        version: 1.7.2
       vue:
         specifier: ^3.4.0
         version: 3.5.32(typescript@5.9.3)
