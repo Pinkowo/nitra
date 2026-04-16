@@ -1,0 +1,70 @@
+// ── CSS Tokens ───────────────────────────────────────────────────────────────
+:root {
+  --sky-a: #7EB8D4;
+  --sky-b: #A8D8EA;
+  --sky-c: #D6EDFF;
+  --street: #C4965A;
+  --sidewalk: #D9B87A;
+  --shop-dark: rgba(18, 8, 0, 0.65);
+  --cash: #A07000;
+  --nitra: #C83A18;
+  --txt: #2C1F0F;
+  --txt-mid: #8A6845;
+  --txt-lt: #B09878;
+  --hp-hi: #52B86A;
+  --hp-md: #E89818;
+  --hp-lo: #D83830;
+  --btn-r: #C83A18;
+  --btn-r-dk: #A02A10;
+  --btn-g: #358038;
+  --btn-g-dk: #24582A;
+  --hud-bg: rgba(255, 252, 240, 0.97);
+  --hud-bd: rgba(180, 148, 98, 0.3);
+  --r-btn: 8px;
+  --t-sheet: transform 300ms cubic-bezier(0.2, 0, 0, 1);
+  --t-bub: transform 250ms cubic-bezier(0.35, 0, 0.25, 1), opacity 250ms ease, box-shadow 250ms ease;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Helvetica Neue', system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+  color: var(--txt);
+}
+
+// Floating damage / cash numbers
+.float-num {
+  position: fixed;
+  font-weight: 900;
+  pointer-events: none;
+  z-index: 9999;
+  animation: float-up 0.78s ease-out forwards;
+}
+.float-num.dmg {
+  font-size: 1.6rem;
+  color: #D02818;
+  text-shadow: 0 1px 0 rgba(255,255,255,.9), 0 0 8px rgba(208,40,24,.4);
+}
+.float-num.cash-pop {
+  font-size: 1.25rem;
+  color: #906000;
+  text-shadow: 0 1px 0 rgba(255,255,255,.9);
+}
+@keyframes float-up {
+  0%   { transform: translateY(0);     opacity: 1; }
+  100% { transform: translateY(-54px); opacity: 0; }
+}
+
+// Walk animations — global so inline style="animation:walk-right..." can find them
+@keyframes walk-right {
+  from { left: -100px; }
+  to   { left: calc(100% + 100px); }
+}
+@keyframes walk-left {
+  from { right: -100px; left: auto; }
+  to   { right: calc(100% + 100px); left: auto; }
+}

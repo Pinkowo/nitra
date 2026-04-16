@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Environment variables (contains secrets)
+.env
+.env.local
+.env.*.local
+
+# Build output
+dist/
+.quasar/
+
+# Editor
+.DS_Store
+*.log
