@@ -93,7 +93,7 @@ export interface LeaderboardEntry {
   name: string
   cashBalance: number
   assetsValue: number
-  attackPower: number        // 10 + assetsValue / 100
+  equipmentCount: number     // ownedEquipment.length
   customersRecruited: number
   totalWorth: number         // cashBalance + assetsValue
 }

@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 import type { Equipment, Player } from '../types'
 import { PaymentMode } from '../types'
 import { syncPlayerData } from '../services/playerService'
+import { equipmentById } from '../assets/equipment-data'
 
 // ─── Store ────────────────────────────────────────────────────────────────────
 
@@ -24,6 +25,14 @@ export const useGameStore = defineStore('game', () => {
   // ─── Computed Getters ───────────────────────────────────────────────────────
 
   const attackPower = computed(() => 10)
+
+  // 1 + 已買器材總價 / 20000（例如買了 $2000 → 1.1x，全買完約 1.7x）
+  const rewardMultiplier = computed(() => {
+    const totalCost = ownedEquipment.value.reduce(
+      (sum, id) => sum + (equipmentById[id]?.price ?? 0), 0,
+    )
+    return 1 + totalCost / 20000
+  })
 
   const totalWorth = computed(() => cashBalance.value + assetsValue.value)
 
@@ -138,6 +147,7 @@ export const useGameStore = defineStore('game', () => {
     customersRecruited,
     // getters
     attackPower,
+    rewardMultiplier,
     totalWorth,
     availableCredit,
     canAffordCash,

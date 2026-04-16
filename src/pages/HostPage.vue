@@ -44,7 +44,7 @@
         <div class="text-h1 text-weight-bold text-yellow" style="letter-spacing: 8px;">
           {{ roomId }}
         </div>
-        <div class="text-caption text-grey-5 q-mt-xs">讓玩家輸入此 ID 加入</div>
+        <div class="text-caption text-grey-5 q-mt-xs">掃 QR Code 或輸入 ID 加入</div>
         <div class="row justify-center q-mt-md">
           <q-btn
             flat
@@ -57,6 +57,11 @@
           />
         </div>
       </div>
+
+      <!-- QR Code -->
+      <q-card flat class="q-mb-lg" style="background: #fff; border-radius: 16px; padding: 12px;">
+        <canvas ref="qrCanvas" style="display: block;" />
+      </q-card>
 
       <!-- Players joined -->
       <q-card flat class="q-mb-lg" style="background: #1a3a6b; min-width: 280px;">
@@ -88,12 +93,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onUnmounted } from 'vue'
+import { ref, computed, watch, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGameStore } from '../stores/useGameStore'
 import { useRoomStore } from '../stores/useRoomStore'
 import { createRoom, startGame, deleteRoom, subscribeRoom } from '../services/roomService'
 import { GameStatus } from '../types'
+import QRCode from 'qrcode'
 
 const router = useRouter()
 const gameStore = useGameStore()
@@ -105,7 +111,21 @@ const hostUid = ref('')
 const started = ref(false)
 const creating = ref(false)
 const rerolling = ref(false)
+const qrCanvas = ref<HTMLCanvasElement | null>(null)
 let unsubscribe: (() => void) | null = null
+
+function joinUrl(id: string): string {
+  const base = window.location.href.split('#')[0]
+  return `${base}#/join?room=${id}`
+}
+
+watch(roomId, async (id) => {
+  if (!id) return
+  await nextTick()
+  if (qrCanvas.value) {
+    await QRCode.toCanvas(qrCanvas.value, joinUrl(id), { width: 200, margin: 1 })
+  }
+})
 
 const playerList = computed(() => Object.values(roomStore.players).filter((p) => !p.isHost))
 

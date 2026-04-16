@@ -61,8 +61,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useGameStore } from '../stores/useGameStore'
 import { useRoomStore } from '../stores/useRoomStore'
 import { joinRoom, subscribeRoom } from '../services/roomService'
@@ -72,11 +72,17 @@ import { ref as dbRef, get } from 'firebase/database'
 import { GameStatus } from '../types'
 
 const router = useRouter()
+const route  = useRoute()
 const gameStore = useGameStore()
 const roomStore = useRoomStore()
 
 const playerName = ref('')
 const inputRoomId = ref('')
+
+onMounted(() => {
+  const r = route.query.room
+  if (r && typeof r === 'string') inputRoomId.value = r
+})
 const joining = ref(false)
 const joined = ref(false)
 const joinError = ref('')

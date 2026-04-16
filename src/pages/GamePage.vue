@@ -598,7 +598,7 @@ function hitCustomer(idx: number, event: MouseEvent | TouchEvent) {
   navigator.vibrate?.(30)
   spawnFloat(`-${dmg}`, 'dmg', event)
   if (c.hp <= 0) {
-    const reward = dmg * 12
+    const reward = Math.round(dmg * 12 * gameStore.rewardMultiplier)
     c.dying = true
     gameStore.addCash(reward)
     gameStore.recruitCustomer()

@@ -31,7 +31,7 @@ export async function getLeaderboard(roomId: string): Promise<LeaderboardEntry[]
       name: player.name,
       cashBalance: player.cashBalance,
       assetsValue: player.assetsValue,
-      attackPower: 10 + Math.floor(player.assetsValue / 100),
+      equipmentCount: (player.ownedEquipment ?? []).length,
       customersRecruited: player.customersRecruited ?? 0,
       totalWorth: player.cashBalance + player.assetsValue,
     }))

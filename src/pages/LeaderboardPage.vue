@@ -22,7 +22,7 @@
         </div>
         <div class="lb-name">{{ entry.name }}</div>
         <div class="lb-chips">
-          <span class="stat-chip">Atk {{ entry.attackPower }}</span>
+          <span class="stat-chip">器材 {{ entry.equipmentCount }} 件</span>
           <span class="stat-chip">{{ entry.customersRecruited }} 人</span>
         </div>
         <div class="lb-total">{{ (entry.cashBalance + entry.assetsValue).toLocaleString() }}</div>
