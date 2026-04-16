@@ -17,7 +17,7 @@
 ## Stores (Pinia)
 
 - [x] Implement `useGameStore`: state (cashBalance, assetsValue, creditUsed, creditLimit, ownedEquipment) ~60 lines
-- [x] Add computed getters: `attackPower = 10 + floor(assetsValue/100)`, `totalWorth = cashBalance + assetsValue` ~20 lines
+- [x] Add computed getters: `attackPower = 10` (fixed), `rewardMultiplier = 1 + totalOwnedEquipmentCost/20000`, `totalWorth = cashBalance + assetsValue` ~25 lines
 - [x] Add actions: `buyEquipment(item, mode)`, `repayCredit()`, `syncFromFirebase(playerData)` ~80 lines
 - [x] Implement `useRoomStore`: roomId, players list, gameStatus, startedAt, timeRemaining computed ~60 lines
 - [x] Implement `useEventStore`: flashSaleState, whaleState, isLocked (repayment lock) ~40 lines
@@ -31,15 +31,15 @@
 
 ## Pages & Components
 
-- [x] [P] Build `HostPage.vue`: generate Room ID, show QR code, Start Game button, player list ~80 lines
-- [x] [P] Build `JoinPage.vue`: input name + Room ID, join room, navigate to GamePage ~50 lines
-- [x] Build `GamePage.vue`: assemble all game areas, bind game store, handle game lifecycle ~100 lines
+- [x] [P] Build `HostPage.vue`: generate Room ID, show QR code (canvas via `qrcode`), Start Game button, player list ~100 lines
+- [x] [P] Build `JoinPage.vue`: input name + Room ID, join room, navigate to GamePage; auto-fill room ID from `?room=` query param ~60 lines
+- [x] Build `GamePage.vue`: assemble all game areas, bind game store, handle game lifecycle; carousel uses non-passive touch listeners ~100 lines
 - [x] Build `CustomerArea.vue`: tappable customer sprite (image slot), GSAP damage pop-up ~60 lines
 - [x] Build `EquipmentShop.vue`: grid of 15 equipment cards (image slot), cash/Nitra buy buttons ~100 lines
 - [x] Build `GameHeader.vue`: QLinearProgress credit bar, QBadge rank, countdown timer display ~50 lines
-- [x] Build `FlashSaleOverlay.vue`: 3-second countdown + claim button + sold-out state ~60 lines
+- [x] Build `FlashSaleOverlay.vue`: non-blocking sky-centre floating card; `isWinner` as computed; fires only at 5 fixed time points ~80 lines
 - [x] Build `WhaleOverlay.vue`: shared HP bar, tap area, last-hit winner banner ~70 lines
-- [x] Build `LeaderboardPage.vue`: GSAP "TIME'S UP" animation → ranked player rows ~80 lines
+- [x] Build `LeaderboardPage.vue`: GSAP "TIME'S UP" animation → ranked player rows; shows equipmentCount instead of attackPower ~80 lines
 
 ## Tests
 
