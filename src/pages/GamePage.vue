@@ -180,6 +180,12 @@
             還款處理中 {{ eventStore.repayLockSecondsLeft }}s
           </div>
         </div>
+
+        <!-- Last-hit celebration -->
+        <div v-if="whaleLastHitVisible" class="whale-last-hit">
+          <div class="wlh-label">🎉 賺到了！</div>
+          <div class="wlh-bonus">+{{ whaleLastHitBonus.toLocaleString() }}</div>
+        </div>
       </div>
 
       <!-- Street lane -->
@@ -365,7 +371,7 @@
             top: '50%',
             zIndex: slot.isCenter ? 2 : 1,
           }"
-          @click="slot.offset !== 0 && slot.idx >= 0 && slot.idx < EQUIPMENT_LIST.length ? jumpTo(slot.idx) : undefined"
+          @click="slot.offset !== 0 ? jumpTo(slot.idx) : undefined"
         >
           <template v-if="slot.item">
             <svg :width="slot.iconSize" :height="slot.iconSize" style="display:block;flex-shrink:0">
@@ -399,7 +405,7 @@
 
       <!-- Actions -->
       <div class="shop-actions">
-        <button class="btn-cancel" @click="closeShop">取消</button>
+        <button class="btn-cancel" @click="closeShop">關閉</button>
         <button class="btn-buy" :disabled="!canBuy" @click="doBuy">Nitra 購買</button>
       </div>
     </div>
@@ -480,15 +486,18 @@ const SLOT_OPACITY: Record<string, number> = { '-2': 0.28, '-1': 0.72, '0': 1, '
 const SLOT_X: Record<string, number>       = { '-2': -200, '-1': -108, '0': 0, '1': 108, '2': 200 }
 const BASE_SIZE = 100
 
+const N = EQUIPMENT_LIST.length
+const wrapIdx = (i: number) => ((i % N) + N) % N
+
 const carouselSlots = computed(() => {
   return [-2, -1, 0, 1, 2].map((off) => {
     const k = String(off)
-    const i = selIdx.value + off
+    const i = wrapIdx(selIdx.value + off)
     const scale = SLOT_SCALE[k]
     const size = Math.round(BASE_SIZE * scale)
     const x = SLOT_X[k] + dragDx.value
-    const item = i >= 0 && i < EQUIPMENT_LIST.length ? EQUIPMENT_LIST[i] : null
-    const isPrem = item?.isPremium ?? false
+    const item = EQUIPMENT_LIST[i]!
+    const isPrem = item.isPremium
     const isCenter = off === 0
     const bg  = isCenter ? (isPrem ? '#E8D8FF' : '#FFF09A') : (isPrem ? '#EDE0FF' : '#EBF5FB')
     const bd  = isCenter ? (isPrem ? '#9858D8' : '#C8A800') : (isPrem ? '#B080E0' : '#A8C8E0')
@@ -505,9 +514,7 @@ const carouselSlots = computed(() => {
   })
 })
 
-const selectedItem = computed(() =>
-  selIdx.value >= 0 && selIdx.value < EQUIPMENT_LIST.length ? EQUIPMENT_LIST[selIdx.value] : null,
-)
+const selectedItem = computed(() => EQUIPMENT_LIST[wrapIdx(selIdx.value)]!)
 const isOwned = computed(() =>
   selectedItem.value ? gameStore.ownedEquipment.includes(selectedItem.value.id) : false,
 )
@@ -560,7 +567,7 @@ function onDragEnd() {
   dragActive.value = false
   const raw = dragDx.value / 0.6
   if (Math.abs(raw) > 40)
-    selIdx.value = Math.max(0, Math.min(EQUIPMENT_LIST.length - 1, selIdx.value + (raw < 0 ? 1 : -1)))
+    selIdx.value = wrapIdx(selIdx.value + (raw < 0 ? 1 : -1))
   dragDx.value = 0
 }
 function jumpTo(idx: number) {
@@ -632,8 +639,16 @@ const topPlayers = computed(() => roomStore.sortedPlayers.slice(0, 3))
 // ─── Sky events ───────────────────────────────────────────────────────────────
 const skyLbDimmed = ref(false)
 const whaleBannerVisible = ref(false)
+const whaleLastHitVisible = ref(false)
+const whaleLastHitBonus = ref(0)
 const flashCountdownVisible = ref(false)
 const flashCountdownNum = ref(3)
+
+function showLastHitCelebration(bonus: number) {
+  whaleLastHitBonus.value = bonus
+  whaleLastHitVisible.value = true
+  setTimeout(() => { whaleLastHitVisible.value = false }, 3000)
+}
 
 // Whale
 const whaleState = computed(() => eventStore.whaleState)
@@ -718,6 +733,7 @@ function hitWhaleDemoLocal(event: MouseEvent | TouchEvent) {
     const bonus = whale.whaleBaseHp * 50
     gameStore.addCash(bonus)
     spawnFloat(`+${bonus} LAST HIT`, 'cash-pop', event)
+    showLastHitCelebration(bonus)
     eventStore.setWhale(null)
     scheduleDemoWhale() // schedule next whale after this one dies
   } else {
@@ -733,6 +749,7 @@ async function onHitWhale(event: MouseEvent | TouchEvent) {
     gameStore.addCash(bonusCash)
     await clearWhale(gameStore.roomId)
     spawnFloat(`+${bonusCash} LAST HIT`, 'cash-pop', event)
+    showLastHitCelebration(bonusCash)
   }
   spawnFloat(`-${gameStore.attackPower}`, 'dmg', event)
 }
@@ -1001,6 +1018,29 @@ watch(
 }
 .whale-boss-hp {
   font-size:.72rem;color:rgba(255,255,255,.7);text-align:center;margin-top:4px;
+}
+
+/* Whale last-hit celebration — sky centre */
+.whale-last-hit {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  pointer-events: none; z-index: 5;
+  animation: wlh-in .3s cubic-bezier(.17,.67,.35,1.4) both;
+}
+@keyframes wlh-in {
+  from { transform: translate(-50%, -50%) scale(.4); opacity: 0; }
+  to   { transform: translate(-50%, -50%) scale(1);  opacity: 1; }
+}
+.wlh-label {
+  font-size: 2rem; font-weight: 900; color: #FFD028;
+  text-shadow: 0 0 30px rgba(255,208,40,.8), 3px 3px 0 rgba(0,0,0,.4);
+  white-space: nowrap;
+}
+.wlh-bonus {
+  font-size: 1.5rem; font-weight: 900; color: #68EDAA;
+  text-shadow: 0 0 20px rgba(104,237,170,.7), 2px 2px 0 rgba(0,0,0,.4);
 }
 
 /* Flash sale countdown — no backdrop, just the numbers floating on screen */
