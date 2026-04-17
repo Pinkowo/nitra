@@ -686,8 +686,8 @@ function scheduleDemoWhale() {
 
 function startDemoEvents() {
   const startedAt = roomStore.startedAt ?? Date.now()
-  // Trigger 3s countdown at 27/57/87/117/147s, then activate 3.1s later
-  const countdownTimes = [27, 57, 87, 117, 147]
+  // Trigger 3s countdown at 17/37/57s (1:10/0:50/0:30 remaining), then activate 3.1s later
+  const countdownTimes = [17, 37, 57]
   countdownTimes.forEach((t) => {
     const delay = startedAt + t * 1000 - Date.now()
     if (delay < 0) return

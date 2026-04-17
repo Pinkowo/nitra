@@ -18,9 +18,9 @@ export function useGameTimer() {
   // timeRemaining reads _tick so it re-evaluates every second when tick increments
   const timeRemaining = computed(() => {
     _tick.value // reactive dependency — forces re-evaluation on each tick
-    if (!roomStore.startedAt || roomStore.status !== GameStatus.Playing) return 180
+    if (!roomStore.startedAt || roomStore.status !== GameStatus.Playing) return 90
     const elapsed = (Date.now() - roomStore.startedAt) / 1000
-    return Math.max(0, 180 - elapsed)
+    return Math.max(0, 90 - elapsed)
   })
 
   const formattedTime = computed(() => {

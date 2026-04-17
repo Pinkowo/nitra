@@ -21,10 +21,10 @@ export function initFlashSaleTimer(roomId: string): void {
   let secondsElapsed = 0
 
   // Exact seconds at which countdown starts (3s before each appearance)
-  // Corresponding to 2:30, 2:00, 1:30, 1:00, 0:30 remaining in a 180s game
-  const COUNTDOWN_SECONDS = new Set([27, 57, 87, 117, 147])
+  // Corresponding to 1:10, 0:50, 0:30 remaining in a 90s game
+  const COUNTDOWN_SECONDS = new Set([17, 37, 57])
   // Exact seconds at which the overlay appears (after countdown finishes)
-  const ACTIVATE_SECONDS  = new Set([30, 60, 90, 120, 150])
+  const ACTIVATE_SECONDS  = new Set([20, 40, 60])
 
   const intervalId = setInterval(async () => {
     secondsElapsed++
